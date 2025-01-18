@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship, sessionmaker
 
 Base = declarative_base()
 
+# Existing Tables
 class Course(Base):
     __tablename__ = 'courses'
     id = Column(Integer, primary_key=True)
@@ -45,17 +46,31 @@ Course.locations = relationship("Location", order_by=Location.id, back_populates
 class Enrollment(Base):
     __tablename__ = 'enrollments'
     id = Column(Integer, primary_key=True)
-    student_cluster = Column(String)
+    student_id = Column(Integer, ForeignKey('students.id'))
     course_id = Column(Integer, ForeignKey('courses.id'))
+    student = relationship("Student", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
 
 Course.enrollments = relationship("Enrollment", order_by=Enrollment.id, back_populates="course")
 
+# New Tables
+class Student(Base):
+    __tablename__ = 'students'
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    email = Column(String)
+    academic_level = Column(String)
+    enrollments = relationship("Enrollment", back_populates="student")
+    previous_classes = relationship("StudentClass", back_populates="student")
 
-# Database connection
-DATABASE_URL = 'sqlite:///WPI_COURSE_LISTINGS.db'
-engine = create_engine(DATABASE_URL)
-
+class StudentClass(Base):
+    __tablename__ = 'student_classes'
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, ForeignKey('students.id'))
+    course_id = Column(Integer, ForeignKey('courses.id'))
+    grade = Column(String)
+    student = relationship("Student", back_populates="previous_classes")
+    course = relationship("Course")
 # Create all tables in the database
 Base.metadata.create_all(engine)
 
