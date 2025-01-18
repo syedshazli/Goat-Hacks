@@ -1,9 +1,10 @@
 import { useContext, useState } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const AccountPage = () => {
-    const { user, token, logoutUser } = useContext(AuthContext);
+    const { user, jwtToken, logoutUser } = useContext(AuthContext);
 
     // Make local states to allow editing
     const [editing, setEditing] = useState(false);
@@ -22,36 +23,30 @@ const AccountPage = () => {
             sports,
             futureGoals,
         };
+
+        // Send updated data to the server
         fetch('/api/update-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`,
+                Authorization: `Bearer ${jwtToken}`,
             },
             body: JSON.stringify(updatedData),
         })
         .then((res) => {
-            if (!res.ok) throw new Error('Update failed');
+            if (!res.ok) {
+                toast.error('Profile failed to update.');
+                throw new Error('Update failed');
+            }
             return res.json();
         })
         .then((data) => {
             console.log('Profile updated:', data.updatedUser);
+            toast.success('Profile updated successfully.');
             setEditing(false);
         })
         .catch((err) => console.error(err));
     };
-
-    // If user is not logged in
-    if (user) {
-        return (
-            <div className="min-h-screen bg-[#AC2B37] text-white">
-                <Navbar />
-                <div className="p-10 mt-20 text-center">
-                    <h1 className="text-2xl">Please login to view your profile.</h1>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -169,7 +164,7 @@ const AccountPage = () => {
                         <div className="space-y-3">
                             <p><b>Name:</b> {name}</p>
                             <p><b>Email:</b> {email}</p>
-                            <p><b>Future Goals:</b> {futureGoals || 'N/A'}</p>
+                            <p><b>Future Goals:</b> {futureGoals || 'None'}</p>
                             <p>
                                 <b>Completed Courses:</b>{' '}
                                 {completedCourses.length > 0 ? completedCourses.join(', ') : 'None'}

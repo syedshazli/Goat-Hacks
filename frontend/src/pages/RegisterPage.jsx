@@ -8,26 +8,30 @@ const RegisterPage = () => {
     const { loginUser } = useContext(AuthContext);
     const navigate = useNavigate();
 
-// Register the user
+    // Register the user
     const handleRegister = (e) => {
         e.preventDefault();
 
-        fetch('/register', {
+        fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         })
-        .then((res) => {
-            if (!res.ok) throw new Error('Registration failed');
-            return res.json();
+        .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+                const error = data.message || 'Registration failed';
+                throw new Error(error);
+            }
+            return data;
         })
         .then((data) => {
-            loginUser({ userData: data.user, jwtToken: data.token }); // Change after backend is implemented
-            navigate('/account');
+            // Navigate to the login page
+            navigate('/login');
         })
         .catch((err) => {
             console.error(err);
-            alert('Registration failed. Please try again.');
+            alert(err.message || 'Registration failed. Please try again.');
         });
     };
 

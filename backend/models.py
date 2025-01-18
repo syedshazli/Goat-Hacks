@@ -158,6 +158,12 @@ class Student(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     academic_level = Column(String)
+    
+    password_hash = Column(String, nullable=False)
+    completed_courses = Column(Text, nullable=True)
+    sports = Column(Text, nullable=True)
+    future_goals = Column(Text, nullable=True)
+    
     enrollments = relationship("Enrollment", back_populates="student")
     previous_classes = relationship("StudentClass", back_populates="student")
 

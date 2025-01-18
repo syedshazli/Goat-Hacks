@@ -17,17 +17,22 @@ const LoginPage = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         })
-        .then((res) => {
-            if (!res.ok) throw new Error('Login failed');
-            return res.json();
+        .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+                const error = data.message || 'Login failed';
+                throw new Error(error);
+            }
+            return data;
         })
         .then((data) => {
-            loginUser({ userData: data.user, jwtToken: data.token }); // Change after backend is implemented
+            localStorage.setItem('jwtToken', data.access_token);
+            loginUser({ userData: data.user, jwtToken: data.access_token });
             navigate('/account');
         })
         .catch((err) => {
             console.error(err);
-            alert('Login failed. Please try again.');
+            alert(err.message || 'Login failed. Please try again.');
         });
     };
 
