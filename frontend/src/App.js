@@ -1,10 +1,10 @@
 
 const App = () => {
-  return (
+    return (
     <div className="App">
-      <p className="text-4xl">goat hack</p>
+        <p className="text-4xl">goat hack</p>
     </div>
-  );
+    );
 }
 
 export default App;
