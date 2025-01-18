@@ -77,3 +77,53 @@ Base.metadata.create_all(engine)
 # Create a session
 Session = sessionmaker(bind=engine)
 session = Session()
+
+# open JSON of WPI enrollments
+with open("courses.json", "r") as file:
+    data = json.load(file)["Report_Entry"]
+
+# Populate database from JSON
+for entry in data:
+    # Populate Course table
+    course = Course(
+        course_section=entry["Course_Section"],
+        course_title=entry["Course_Title"],
+        subject=entry["Subject"],
+        course_description=entry["Course_Description"],
+        credits=float(entry["Credits"]),
+        academic_level=entry["Academic_Level"],
+        offering_period=entry["Offering_Period"],
+        start_date=entry["Course_Section_Start_Date"],
+        end_date=entry["Course_Section_End_Date"],
+        instructional_format=entry["Instructional_Format"],
+        delivery_mode=entry["Delivery_Mode"],
+        course_tags=entry["Course_Tags"],
+        academic_units=entry["Academic_Units"],
+        section_status=entry["Section_Status"],
+        waitlist_capacity=entry["Waitlist_Waitlist_Capacity"],
+        enrolled_capacity=entry["Enrolled_Capacity"]
+    )
+    session.add(course)
+    session.commit()  # Commit to get the course ID for relationships
+
+    # Populate Instructor table
+    instructors = entry["Instructors"].split(", ")  # Handle multiple instructors if necessary
+    for instructor_name in instructors:
+        instructor = Instructor(name=instructor_name, course=course)
+        session.add(instructor)
+
+    # Populate Location table
+    location = Location(location_name=entry["Locations"], course=course)
+    session.add(location)
+
+    # Populate Enrollment table (if applicable)
+    if entry.get("Student_Course_Section_Cluster"):  # Check if enrollment data exists
+        enrollment = Enrollment(
+            student_cluster=entry["Student_Course_Section_Cluster"],
+            course=course
+        )
+        session.add(enrollment)
+
+# Commit all the changes to the database
+session.commit()
+print("Database populated successfully!")
