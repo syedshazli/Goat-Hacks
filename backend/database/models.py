@@ -127,3 +127,8 @@ for entry in data:
 # Commit all the changes to the database
 session.commit()
 print("Database populated successfully!")
+
+# For testing if we did this properly
+# courses = session.query(Course).all()
+# for course in courses:
+#     print(course.course_title, course.subject, course.instructional_format)
