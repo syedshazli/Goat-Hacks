@@ -15,7 +15,7 @@ const LandingPage = () => {
                         Create the perfect schedule without the need of an academic advisor.
                     </p>
                     <Link
-                        to="/register"
+                        to="/schedule-form"
                         className="bg-wpiRed hover:bg-[#911F2A] text-white px-6 py-3 rounded font-semibold"
                     >
                         Get Started
