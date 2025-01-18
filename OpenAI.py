@@ -1,3 +1,4 @@
+# From HackHarvard, this maintains context of conversation, which isn't required
 import os
 from dotenv import load_dotenv
 load_dotenv()
