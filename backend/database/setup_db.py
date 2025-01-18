@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text, inspect
 from sqlalchemy.orm import sessionmaker
-from models import Base  # Import your models that include School and Course tables
+from backend.database.models import Base  # Import your models that include School and Course tables
 
 # Use SQLite as the database
 DATABASE_URL = 'sqlite:///WPI_COURSE_LISTINGS.db'
