@@ -1,98 +1,64 @@
-import { useContext } from 'react';
-import { Link } from 'react-router-dom';
+// src/pages/DisplaySchedulesPage.js
+import React, { useContext } from 'react';
 import Navbar from '../components/Navbar';
 import { CourseContext } from '../contexts/CourseContext';
-
-const ScheduleCard = ({ schedule, courses }) => {
-    // Helper function to get course details by ID
-    const getCourseDetails = (courseId) => {
-        return courses.find(course => course.id === courseId);
-    };
-
-    return (
-        <div className="bg-white rounded shadow p-4">
-            <h3 className="text-xl font-bold mb-2">Schedule Option</h3>
-
-            {/* Display courses */}
-            <ul className="list-disc list-inside">
-                {schedule.courseIds?.map((courseId, idx) => {
-                    const course = getCourseDetails(courseId);
-                    if (!course) return null; // If missing a course
-                    return (
-                        <li key={idx} className="mb-1">
-                            <strong>{course.name}</strong>: {course.day} {course.time}
-                        </li>
-                    );
-                })}
-            </ul>
-
-        </div>
-    );
-};
+import { Link } from 'react-router-dom';
 
 const DisplaySchedulesPage = () => {
-    const { courses, schedules, loadingCourses, loadingSchedules, errorCourses, errorSchedules } = useContext(CourseContext);
-
-    // Loading state
-    if (loadingCourses || loadingSchedules) {
-        return (
-            <div className="min-h-screen bg-wpiGray">
-                <Navbar />
-                <div className="flex items-center justify-center pt-10">
-                    <p>Loading...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Error state
-    if (errorCourses || errorSchedules) {
-        return (
-            <div className="min-h-screen bg-wpiGray">
-                <Navbar />
-                <div className="flex items-center justify-center pt-10">
-                    <p>Error: {errorCourses || errorSchedules}</p>
-                </div>
-            </div>
-        );
-    }
+    const { schedules, loadingSchedules, errorSchedules } = useContext(CourseContext);
 
     return (
-        <div className="min-h-screen bg-wpiGray">
+        <div className="min-h-screen bg-[#AC2B37] text-white">
             <Navbar />
 
-            {/* Main section */}
-            <div className="max-w-5xl mx-auto pt-10">
-                <h2 className="text-3xl font-semibold mb-6 text-center">
-                    Recommended Schedules
-                </h2>
+            {/* Display Schedules */}
+            <div className="max-w-5xl mx-auto py-24 px-4">
+                <div className="glass p-6 sm:p-8 rounded-2xl shadow-xl">
+                    <h2 className="text-3xl font-bold mb-6 text-center">
+                        Recommended Schedules
+                    </h2>
 
-                {/* Display schedules */} 
-                {schedules.length === 0 ? (
-                    <p className="text-center">No schedules found. Try again.</p>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {schedules.map((schedule, index) => (
-                            <ScheduleCard
-                                key={index}
-                                schedule={schedule}
-                                courses={courses}
-                            />
-                        ))}
+                    {/* Schedules Grid */}
+                    {loadingSchedules ? (
+                        <p>Loading...</p>
+                    ) : errorSchedules ? (
+                        <p className="text-red-500">Error: {errorSchedules}</p>
+                    ) : !schedules || schedules.length === 0 ? (
+                        <p className="text-center">No schedules found. Try again.</p>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {schedules.map((schedule, index) => (
+                                <div key={index} className="bg-white/10 p-4 rounded shadow">
+                                    <h3 className="text-xl font-semibold mb-2">
+                                        Schedule Option {index + 1}
+                                    </h3>
+                                    <ul className="list-disc list-inside">
+                                        {schedule.courseIds?.map((courseId, idx) => (
+                                        <li key={idx}>Course ID: {courseId}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Generate Another Button */}
+                    <div className="text-center mt-6">
+                        <Link
+                            to="/schedule-form"
+                            className="
+                                inline-block bg-white text-[#AC2B37] font-semibold 
+                                px-6 py-2 rounded-full shadow 
+                                hover:bg-[#f0f0f0] transition duration-300
+                            "
+                        >
+                            Generate Another
+                        </Link>
                     </div>
-                )}
 
-                {/* Generate another schedule */}
-                <div className="text-center mt-6">
-                    <Link
-                        to="/schedule-form"
-                        className="bg-wpiRed text-white py-2 px-4 rounded hover:bg-[#911F2A]"
-                    >
-                        Generate Another
-                    </Link>
                 </div>
-
             </div>
+
         </div>
     );
 };

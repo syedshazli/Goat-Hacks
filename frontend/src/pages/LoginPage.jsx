@@ -1,6 +1,6 @@
 import { useState, useContext } from 'react';
-import { AuthContext } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
+import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -8,23 +8,21 @@ const LoginPage = () => {
     const { loginUser } = useContext(AuthContext);
     const navigate = useNavigate();
 
+    // Login the user
     const handleLogin = (e) => {
         e.preventDefault();
 
-        // Login the user
-        fetch('/login', {
+        fetch('/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         })
         .then((res) => {
-            if (!res.ok) {
-                throw new Error('Login failed');
-            }
+            if (!res.ok) throw new Error('Login failed');
             return res.json();
         })
         .then((data) => {
-            loginUser(data);
+            loginUser({ userData: data.user, jwtToken: data.token }); // Change after backend is implemented
             navigate('/account');
         })
         .catch((err) => {
@@ -34,56 +32,52 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-wpiGray">
+        <div className="min-h-screen">
             <Navbar />
 
-            {/* Login form */}
-            <div className="flex items-center justify-center pt-10">
+            {/* Login Form */}
+            <div className="flex items-center justify-center pt-24 pb-8 px-4">
                 <form
                     onSubmit={handleLogin}
-                    className="bg-white p-6 rounded shadow w-full max-w-md"
+                    className="glass p-8 w-full max-w-md rounded-xl shadow-xl"
                 >
-                    <h2 className="text-2xl font-semibold mb-4">Login</h2>
+                    <h2 className="text-3xl font-bold mb-6 text-center">Login</h2>
 
-                    {/* Email field */}
+                    {/* Email Field */}
                     <div className="mb-4">
                         <label className="block mb-1">Email</label>
                         <input
                             type="email"
-                            className="border border-gray-300 p-2 w-full rounded"
+                            className="w-full p-2 rounded text-black"
                             value={formData.email}
-                            onChange={(e) =>
-                                setFormData({ ...formData, email: e.target.value })
-                            }
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             required
                         />
                     </div>
 
-                    {/* Password field */}
-                    <div className="mb-4">
+                    {/* Password Field */}
+                    <div className="mb-6">
                         <label className="block mb-1">Password</label>
                         <input
                             type="password"
-                            className="border border-gray-300 p-2 w-full rounded"
+                            className="w-full p-2 rounded text-black"
                             value={formData.password}
-                            onChange={(e) =>
-                                setFormData({ ...formData, password: e.target.value })
-                            }
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                             required
                         />
                     </div>
 
-                    {/* Submit button */}
+                    {/* Submit Button */}
                     <button
                         type="submit"
-                        className="bg-wpiRed text-white py-2 px-4 rounded hover:bg-[#911F2A]"
+                        className="button-default w-full"
                     >
                         Login
                     </button>
 
                 </form>
             </div>
-            
+
         </div>
     );
 };

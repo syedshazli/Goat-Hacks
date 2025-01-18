@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useState, useEffect, useContext, useMemo } from 'react';
 import { AuthContext } from './AuthContext';
 
 export const CourseContext = createContext();
@@ -84,11 +84,22 @@ export const CourseProvider = ({ children }) => {
         }
     }, [user]);
 
+    // Separate academic courses from sports courses
+    const academicCourses = useMemo(() => {
+        return courses.filter((c) => !/club|varsity/i.test(c.name));
+    }, [courses]);
+
+    const sportsCourses = useMemo(() => {
+        return courses.filter((c) => /club|varsity/i.test(c.name));
+    }, [courses]);
+
     return (
         <CourseContext.Provider
             value={{
                 courses,
                 schedules,
+                academicCourses,
+                sportsCourses,
                 loadingCourses,
                 loadingSchedules,
                 errorCourses,
