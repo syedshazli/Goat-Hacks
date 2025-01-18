@@ -4,7 +4,7 @@ import { AuthContext } from './AuthContext';
 export const CourseContext = createContext();
 
 export const CourseProvider = ({ children }) => {
-    const { user } = useContext(AuthContext);
+    const { user, jwtToken } = useContext(AuthContext);
     const [courses, setCourses] = useState([]);
     const [schedules, setSchedules] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(true);
@@ -12,14 +12,23 @@ export const CourseProvider = ({ children }) => {
     const [errorCourses, setErrorCourses] = useState(null);
     const [errorSchedules, setErrorSchedules] = useState(null);
 
+    // Normalize title
+    const normalizeTitle = (title) => {
+        return title
+            .toLowerCase()
+            .replace(/–/g, '-') // Replace em dashes with regular dashes
+            .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+            .trim();
+    };
+
     // Fetch courses from backend
     const fetchCourses = () => {
         setLoadingCourses(true);
-        fetch('/courses', {
+        fetch('/api/courses', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                // 'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${jwtToken}`,
             },
         })
             .then(response => {
@@ -29,6 +38,7 @@ export const CourseProvider = ({ children }) => {
                 return response.json();
             })
             .then(data => {
+                console.log("Fetched Courses:", data.courses);
                 setCourses(data.courses);
             })
             .catch(err => {
@@ -43,11 +53,11 @@ export const CourseProvider = ({ children }) => {
     // Fetch schedules from backend
     const fetchSchedules = () => {
         setLoadingSchedules(true);
-        fetch('/schedules', {
+        fetch('/api/schedules', {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                // 'Authorization': `Bearer ${token}`,
+                'Authorization': `Bearer ${jwtToken}`,
             },
         })
             .then(response => {
@@ -84,13 +94,23 @@ export const CourseProvider = ({ children }) => {
         }
     }, [user]);
 
-    // Separate academic courses from sports courses
+    // Separate academic courses from sports courses using the correct property
     const academicCourses = useMemo(() => {
-        return courses.filter((c) => !/club|varsity/i.test(c.name));
+        return courses.filter((c) => {
+            const title = normalizeTitle(c.course_title || '');
+            const isAcademic = !title.includes("varsity") && !(title.includes("wpe") && title.includes("club"));
+            if (isAcademic) console.log("Academic Course:", c.course_title);
+            return isAcademic;
+        });
     }, [courses]);
 
     const sportsCourses = useMemo(() => {
-        return courses.filter((c) => /club|varsity/i.test(c.name));
+        return courses.filter((c) => {
+            const title = normalizeTitle(c.course_title || '');
+            const isSport = title.includes("varsity") || (title.includes("wpe") && title.includes("club"));
+            if (isSport) console.log("Sport Course:", c.course_title);
+            return isSport;
+        });
     }, [courses]);
 
     return (

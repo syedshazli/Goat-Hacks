@@ -71,9 +71,18 @@ def register():
     db.add(new_student)
     db.commit()
 
+    student = db.query(Student).filter_by(email=email).first()
+    if not student:
+        db.close()
+        return jsonify({"message": "User not found"}), 404
+
+    # Generate JWT Access Token
+    access_token = create_access_token(identity=str(student.id))
+
     # Return success + user data (minus password)
     return jsonify({
         "message": "Registration successful",
+        "access_token": access_token,
         "user": {
             "id": new_student.id,
             "name": new_student.name,

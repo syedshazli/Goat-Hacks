@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
@@ -21,13 +22,16 @@ const RegisterPage = () => {
             const data = await res.json();
             if (!res.ok) {
                 const error = data.message || 'Registration failed';
+                toast.error(error);
                 throw new Error(error);
             }
             return data;
         })
         .then((data) => {
-            // Navigate to the login page
-            navigate('/login');
+            toast.success('Registration successful');
+            loginUser({ userData: data.user, jwtToken: data.access_token });
+            // Navigate to the account page
+            navigate('/account');
         })
         .catch((err) => {
             console.error(err);

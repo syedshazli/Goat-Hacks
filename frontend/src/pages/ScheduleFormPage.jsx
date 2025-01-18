@@ -6,13 +6,10 @@ import { CourseContext } from '../contexts/CourseContext';
 
 const ScheduleFormPage = () => {
     const { user, token } = useContext(AuthContext);
-    const { courses, fetchSchedules } = useContext(CourseContext);
+    const { academicCourses, sportsCourses, fetchSchedules } = useContext(CourseContext);
+
 
     const navigate = useNavigate();
-
-    // Separate academic courses vs. sports courses from the entire course list
-    const academicCourses = courses.filter((c) => !/club|varsity/i.test(c.name));
-    const sportsCourses = courses.filter((c) => /club|varsity/i.test(c.name));
 
     // Initialize from user's data, if any
     const [completedCourses, setCompletedCourses] = useState(user?.completedCourses?.filter((c) => !/club|varsity/i.test(c)) || []);
@@ -24,8 +21,8 @@ const ScheduleFormPage = () => {
     const [sportsSearch, setSportsSearch] = useState('');
 
     // Filter for the search
-    const filteredAcademic = academicCourses.filter((course) => course.name.toLowerCase().includes(academicSearch.toLowerCase()));
-    const filteredSports = sportsCourses.filter((course) => course.name.toLowerCase().includes(sportsSearch.toLowerCase()));
+    const filteredAcademic = academicCourses.filter((course) => course.course_title.toLowerCase().includes(academicSearch.toLowerCase()));
+    const filteredSports = sportsCourses.filter((course) => course.course_title.toLowerCase().includes(sportsSearch.toLowerCase()));
 
     // Add a course to completedCourses
     const handleAddAcademicCourse = (name) => {

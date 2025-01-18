@@ -35,7 +35,7 @@ const LandingPage = () => {
                     Balance academics, extracurriculars, and more.
                 </p>
                 <Link
-                    to="/register"
+                    to="/schedule-form"
                     className="
                         inline-block bg-white text-[#AC2B37] font-semibold px-8 py-3 rounded-full 
                         shadow-md hover:bg-[#f0f0f0] transition duration-300 

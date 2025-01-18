@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -21,13 +22,14 @@ const LoginPage = () => {
             const data = await res.json();
             if (!res.ok) {
                 const error = data.message || 'Login failed';
+                toast.error(error);
                 throw new Error(error);
             }
             return data;
         })
         .then((data) => {
-            localStorage.setItem('jwtToken', data.access_token);
             loginUser({ userData: data.user, jwtToken: data.access_token });
+            toast.success('Login successful');
             navigate('/account');
         })
         .catch((err) => {
