@@ -1,9 +1,8 @@
-import { useContext, useState, useEffect, useCallback } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { CourseContext } from '../contexts/CourseContext';
 import { toast } from 'react-toastify';
-import debounce from 'lodash.debounce';
 
 const AccountPage = () => {
     const { user, jwtToken, logoutUser } = useContext(AuthContext);
@@ -20,91 +19,35 @@ const AccountPage = () => {
     // States for search
     const [courseSearchTerm, setCourseSearchTerm] = useState('');
     const [courseResults, setCourseResults] = useState([]);
-    const [isCourseLoading, setIsCourseLoading] = useState(false);
-    const [courseError, setCourseError] = useState('');
 
     const [sportSearchTerm, setSportSearchTerm] = useState('');
     const [sportResults, setSportResults] = useState([]);
-    const [isSportLoading, setIsSportLoading] = useState(false);
-    const [sportError, setSportError] = useState('');
 
-    // Debounced function to search courses using context data
-    const debouncedSearchCourses = useCallback(
-        debounce((query) => {
-            if (!query) {
-                setCourseResults([]);
-                setCourseError('');
-                setIsCourseLoading(false);
-                return;
-            }
-            setIsCourseLoading(true);
-            setCourseError('');
-            try {
-                const normalizedQuery = query.toLowerCase().trim();
-                const results = academicCourses.filter((course) =>
-                    course.course_title.toLowerCase().includes(normalizedQuery)
-                );
-                if (results.length > 0) {
-                    setCourseResults(results);
-                } else {
-                    setCourseError('No matching courses found.');
-                    setCourseResults([]);
-                }
-            } catch (error) {
-                console.error('Error searching courses:', error);
-                setCourseError('An error occurred while searching for courses.');
-                setCourseResults([]);
-            } finally {
-                setIsCourseLoading(false);
-            }
-        }, 500),
-        [academicCourses]
-    );
-
-    // Effect to handle course search
+    // Function to search courses based on input
     useEffect(() => {
-        debouncedSearchCourses(courseSearchTerm);
-        // Cleanup on unmount
-        return debouncedSearchCourses.cancel;
-    }, [courseSearchTerm, debouncedSearchCourses]);
+        if (!courseSearchTerm) {
+            setCourseResults([]);
+        } else {
+            const normalizedQuery = courseSearchTerm.toLowerCase().trim();
+            const results = academicCourses.filter((course) =>
+                course.course_title.toLowerCase().includes(normalizedQuery)
+            );
+            setCourseResults(results);
+        }
+    }, [courseSearchTerm, academicCourses]);
 
-    // Debounced function to search sports/clubs using sportsCourses from context
-    const debouncedSearchSports = useCallback(
-        debounce((query) => {
-            if (!query) {
-                setSportResults([]);
-                setSportError('');
-                setIsSportLoading(false);
-                return;
-            }
-            setIsSportLoading(true);
-            setSportError('');
-            try {
-                const normalizedQuery = query.toLowerCase().trim();
-                const results = sportsCourses.filter((sport) =>
-                    sport.course_title.toLowerCase().includes(normalizedQuery)
-                );
-                if (results.length === 0) {
-                    setSportError('No matching sports/clubs found.');
-                }
-                setSportResults(results);
-            } catch (error) {
-                console.error('Error searching sports/clubs:', error);
-                setSportError('An error occurred while searching for sports/clubs.');
-                setSportResults([]);
-            } finally {
-                setIsSportLoading(false);
-            }
-        }, 300),
-        [sportsCourses]
-    );
-
-    // Effect to handle sports search
+    // Function to search sports based on input
     useEffect(() => {
-        debouncedSearchSports(sportSearchTerm);
-        // Cleanup on unmount
-        return debouncedSearchSports.cancel;
-    }, [sportSearchTerm, debouncedSearchSports]);
+        if (!sportSearchTerm) {
+            setSportResults([]);
+        } else {
+            const normalizedQuery = sportSearchTerm.toLowerCase().trim();
+            const results = sportsCourses.filter((sport) =>
+                sport.course_title.toLowerCase().includes(normalizedQuery)
+            );
+            setSportResults(results);
+        }
+    }, [sportSearchTerm, sportsCourses]);
 
     // Save Profile Function
     const handleSaveProfile = () => {
@@ -125,19 +68,19 @@ const AccountPage = () => {
             },
             body: JSON.stringify(updatedData),
         })
-        .then(async (res) => {
-            const data = await res.json();
-            if (!res.ok) {
-                toast.error(data.message || 'Profile failed to update.');
-                throw new Error(data.message || 'Update failed');
-            }
-            toast.success('Profile updated successfully.');
-            setEditing(false);
-        })
-        .catch((err) => {
-            console.error(err);
-            toast.error('An error occurred while updating your profile.');
-        });
+            .then(async (res) => {
+                const data = await res.json();
+                if (!res.ok) {
+                    toast.error(data.message || 'Profile failed to update.');
+                    throw new Error(data.message || 'Update failed');
+                }
+                toast.success('Profile updated successfully.');
+                setEditing(false);
+            })
+            .catch((err) => {
+                console.error(err);
+                toast.error('An error occurred while updating your profile.');
+            });
     };
 
     // Handlers to add a course
@@ -183,8 +126,6 @@ const AccountPage = () => {
         <div className="min-h-screen bg-[#AC2B37] text-white">
             <Navbar />
             <div className="max-w-5xl mx-auto py-24 px-4">
-
-                {/* Glass Container */}
                 <div className="glass p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-3xl font-bold">My Account</h2>
@@ -200,8 +141,6 @@ const AccountPage = () => {
 
                     {editing ? (
                         <div className="space-y-4">
-
-                            {/* Name */}
                             <div>
                                 <label className="block mb-1 font-semibold">Name</label>
                                 <input
@@ -211,7 +150,6 @@ const AccountPage = () => {
                                 />
                             </div>
 
-                            {/* Email */}
                             <div>
                                 <label className="block mb-1 font-semibold">Email</label>
                                 <input
@@ -222,7 +160,6 @@ const AccountPage = () => {
                                 />
                             </div>
 
-                            {/* Future Goals */}
                             <div>
                                 <label className="block mb-1 font-semibold">Future Goals</label>
                                 <textarea
@@ -233,7 +170,6 @@ const AccountPage = () => {
                                 />
                             </div>
 
-                            {/* Completed Courses */}
                             <div>
                                 <label className="block mb-1 font-semibold">Completed Courses</label>
                                 <div className="flex flex-wrap gap-2 mb-2">
@@ -253,7 +189,6 @@ const AccountPage = () => {
                                         </span>
                                     ))}
                                 </div>
-                                {/* Search and Add Course */}
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -262,19 +197,6 @@ const AccountPage = () => {
                                         value={courseSearchTerm}
                                         onChange={(e) => setCourseSearchTerm(e.target.value)}
                                     />
-                                    {/* Loading Indicator */}
-                                    {isCourseLoading && (
-                                        <div className="absolute right-3 top-2">
-                                            <span>Loading...</span>
-                                        </div>
-                                    )}
-                                    {/* Error Message */}
-                                    {courseError && (
-                                        <div className="text-red-300 text-sm mt-1">
-                                            {courseError}
-                                        </div>
-                                    )}
-                                    {/* Search Results */}
                                     {courseResults.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-60 overflow-y-auto rounded shadow-lg">
                                             {courseResults.map((course) => (
@@ -291,7 +213,6 @@ const AccountPage = () => {
                                 </div>
                             </div>
 
-                            {/* Sports / Clubs */}
                             <div>
                                 <label className="block mb-1 font-semibold">Sports / Clubs</label>
                                 <div className="flex flex-wrap gap-2 mb-2">
@@ -311,7 +232,6 @@ const AccountPage = () => {
                                         </span>
                                     ))}
                                 </div>
-                                {/* Search and Add Sport/Club */}
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -320,24 +240,11 @@ const AccountPage = () => {
                                         value={sportSearchTerm}
                                         onChange={(e) => setSportSearchTerm(e.target.value)}
                                     />
-                                    {/* Loading Indicator */}
-                                    {isSportLoading && (
-                                        <div className="absolute right-3 top-2">
-                                            <span>Loading...</span>
-                                        </div>
-                                    )}
-                                    {/* Error Message */}
-                                    {sportError && (
-                                        <div className="text-red-300 text-sm mt-1">
-                                            {sportError}
-                                        </div>
-                                    )}
-                                    {/* Search Results */}
                                     {sportResults.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-40 overflow-y-auto rounded shadow-lg">
-                                            {sportResults.map((sport, idx) => (
+                                            {sportResults.map((sport) => (
                                                 <li
-                                                    key={idx}
+                                                    key={sport.id}
                                                     className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
                                                     onClick={() => handleAddSport(sport.course_title)}
                                                 >
@@ -349,7 +256,6 @@ const AccountPage = () => {
                                 </div>
                             </div>
 
-                            {/* Save and Cancel Buttons */}
                             <div className="mt-4 flex gap-2">
                                 <button onClick={handleSaveProfile} className="button-default">
                                     Save
@@ -360,7 +266,6 @@ const AccountPage = () => {
                             </div>
                         </div>
                     ) : (
-                        // Display mode
                         <div className="space-y-3">
                             <p><b>Name:</b> {name}</p>
                             <p><b>Email:</b> {email}</p>
@@ -377,7 +282,6 @@ const AccountPage = () => {
                     )}
                 </div>
 
-                {/* Logout Button */}
                 <div className="text-center">
                     <button onClick={logoutUser} className="button-default">
                         Logout
@@ -386,6 +290,6 @@ const AccountPage = () => {
             </div>
         </div>
     );
-}
+};
 
 export default AccountPage;

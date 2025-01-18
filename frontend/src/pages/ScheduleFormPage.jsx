@@ -8,11 +8,10 @@ const ScheduleFormPage = () => {
     const { user, token } = useContext(AuthContext);
     const { academicCourses, sportsCourses, fetchSchedules } = useContext(CourseContext);
 
-
     const navigate = useNavigate();
 
     // Initialize from user's data, if any
-    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses?.filter((c) => !/club|varsity/i.test(c)) || []);
+    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses|| []);
     const [sports, setSports] = useState(user?.sports || []);
     const [futureGoals, setFutureGoals] = useState(user?.futureGoals || '');
 
@@ -48,7 +47,7 @@ const ScheduleFormPage = () => {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // 1) Update user's profile with new data
+        // Update user's profile with new data
         const updatedProfile = { completedCourses, sports, futureGoals };
 
         fetch('/update-profile', {
@@ -64,7 +63,7 @@ const ScheduleFormPage = () => {
             return res.json();
         })
         .then(() => {
-            // 2) Optionally call generate schedule
+            // Call generate schedule
             return fetch('/generate-schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
