@@ -28,9 +28,9 @@ const LoginPage = () => {
             return data;
         })
         .then((data) => {
-            loginUser({ userData: data.user, jwtToken: data.access_token });
+            loginUser({ userData: data.user, jwtToken: data.access_token }); // Store user data in context
             toast.success('Login successful');
-            navigate('/account');
+            navigate('/schedule-form');
         })
         .catch((err) => {
             console.error(err);

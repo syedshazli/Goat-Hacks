@@ -29,9 +29,8 @@ const RegisterPage = () => {
         })
         .then((data) => {
             toast.success('Registration successful');
-            loginUser({ userData: data.user, jwtToken: data.access_token });
-            // Navigate to the account page
-            navigate('/account');
+            loginUser({ userData: data.user, jwtToken: data.access_token }); // Store user data in context
+            navigate('/schedule-form');
         })
         .catch((err) => {
             console.error(err);
@@ -93,6 +92,7 @@ const RegisterPage = () => {
                     >
                         Register
                     </button>
+
                 </form>
             </div>
 

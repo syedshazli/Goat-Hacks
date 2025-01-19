@@ -11,11 +11,20 @@ export const CourseProvider = ({ children }) => {
 
     // Normalize title
     const normalizeTitle = (title) => {
-        return title
-            .toLowerCase()
-            .replace(/–/g, '-') // Replace em dashes with regular dashes
-            .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
-            .trim();
+        return title.toLowerCase().trim();
+    };
+
+    // Filter out duplicate courses by course_title
+    const filterDistinctCourses = (courseList) => {
+        const seenTitles = new Set();
+        return courseList.filter((course) => {
+            const normalizedTitle = normalizeTitle(course.course_title || '');
+            if (seenTitles.has(normalizedTitle)) {
+                return false; // Skip duplicate
+            }
+            seenTitles.add(normalizedTitle);
+            return true;
+        });
     };
 
     // Fetch courses from backend
@@ -36,7 +45,8 @@ export const CourseProvider = ({ children }) => {
             })
             .then(data => {
                 console.log("Fetched Courses:", data.courses);
-                setCourses(data.courses);
+                const distinctCourses = filterDistinctCourses(data.courses);
+                setCourses(distinctCourses);
             })
             .catch(err => {
                 console.error(err);

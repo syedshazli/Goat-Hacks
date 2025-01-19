@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
@@ -10,45 +10,56 @@ const DisplaySchedulesPage = () => {
     const [schedule, setSchedule] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const retryCount = useRef(0);
+    const maxRetries = 3;
+    const retryDelay = 10;
+
+    const fetchSchedule = async () => {
+        try {
+            const response = await fetch('/api/generate-schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${jwtToken}`,
+                },
+                body: JSON.stringify({ userData: user }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to generate schedule');
+            }
+
+            const data = await response.json();
+
+            // This is a cheating way bc swarm is being weird
+            const isValid = data.schedule?.recommendations.join("").includes("final");
+
+            if (isValid) {
+                setSchedule(data.schedule);
+                setLoading(false);
+            } else {
+                throw new Error('Failed to generate a valid schedule. Please try again.');
+            }
+        } catch (err) {
+            retryCount.current += 1;
+            if (retryCount.current <= maxRetries) {
+                setTimeout(fetchSchedule, retryDelay);
+            } else {
+                setLoading(false);
+                setError(err.message);
+            }
+        }
+    };
 
     useEffect(() => {
-        // Fetch schedule only once on mount
         if (!jwtToken) {
             setLoading(false);
             setError('No valid token found');
             return;
         }
-
-        fetch('/api/generate-schedule', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${jwtToken}`,
-            },
-            body: JSON.stringify({
-                userData: user,
-            }),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    return response.json().then((errorData) => {
-                        throw new Error(errorData.message || 'Failed to generate schedule');
-                    });
-                }
-                return response.json();
-            })
-            .then((data) => {
-                setSchedule(data.schedule);
-            })
-            .catch((err) => {
-                console.error(err);
-                setError(err.message);
-                toast.error(`Error: ${err.message}`);
-            })
-            .finally(() => {
-                setLoading(false);
-            });
-    }, []);
+        fetchSchedule();
+    }, [jwtToken]);
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -63,22 +74,22 @@ const DisplaySchedulesPage = () => {
 
                     {/* Schedules Grid */}
                     {loading ? (
-                        <p>Loading...</p>
+                        <p className="text-center">Loading...</p>
                     ) : error ? (
                         <p className="text-red-500">Error: {error}</p>
                     ) : !schedule ? (
                         <p className="text-center">No schedule found. Try again.</p>
-                    ) : schedule.recommendations.join("").includes("final") ? (
+                    ) : (
                         <div className="bg-white/10 p-4 rounded shadow">
                             <h3 className="text-xl font-semibold mb-2">
                                 Your Recommended Schedule
                             </h3>
                             {schedule.recommendations.map((recommendation, idx) => (
-                                <ReactMarkdown className="p-1">{recommendation}</ReactMarkdown>
+                                <ReactMarkdown key={idx} className="p-1">
+                                    {recommendation}
+                                </ReactMarkdown>
                             ))}
                         </div>
-                    ) : (
-                        <p>Loading...</p>
                     )}
 
                     {/* Generate Another Button */}

@@ -6,7 +6,7 @@ from models import Base, Department, Course, Instructor, Location
 from bs4 import BeautifulSoup
 
 # Database configuration
-DATABASE_URL = 'sqlite:///WPI_COURSE_LISTINGS.db'
+DATABASE_URL = 'sqlite:///WPI_COURSES.db'
 
 # Create a database engine
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
@@ -23,7 +23,7 @@ with open('courses.json', 'r', encoding='utf-8') as file:
 course_entries = data["Report_Entry"]
 
 for entry in course_entries:
-    # Get the department name from 'Academic_Units' and strip whitespace
+    # Get the department name and strip whitespace
     department_name = entry.get("Academic_Units", "").strip()
 
     # Check if the department already exists
@@ -66,10 +66,10 @@ for entry in course_entries:
         section_status=entry["Section_Status"],
         waitlist_capacity=entry["Waitlist_Waitlist_Capacity"],
         enrolled_capacity=entry["Enrolled_Capacity"],
-        department=department  # Link to Department
+        department=department # Link to Department
     )
     session.add(course)
-    session.commit()  # Commit to generate the course ID
+    session.commit() # Commit to generate the course ID
 
     # Add Instructors
     instructors = entry.get("Instructors", "").split(",")
@@ -88,4 +88,4 @@ for entry in course_entries:
 # Close the session
 session.close()
 
-print("Database seeding complete.")
+print("Database filling complete.")

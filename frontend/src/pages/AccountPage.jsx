@@ -129,6 +129,8 @@ const AccountPage = () => {
                 <div className="glass p-6 sm:p-8 rounded-2xl shadow-xl mb-8">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-3xl font-bold">My Account</h2>
+
+                        {/* Edit button */}
                         {!editing && (
                             <button
                                 onClick={() => setEditing(true)}
@@ -137,10 +139,13 @@ const AccountPage = () => {
                                 Edit
                             </button>
                         )}
+
                     </div>
 
                     {editing ? (
                         <div className="space-y-4">
+
+                            {/* Name Field */}
                             <div>
                                 <label className="block mb-1 font-semibold">Name</label>
                                 <input
@@ -150,6 +155,7 @@ const AccountPage = () => {
                                 />
                             </div>
 
+                            {/* Email Field */}
                             <div>
                                 <label className="block mb-1 font-semibold">Email</label>
                                 <input
@@ -160,6 +166,7 @@ const AccountPage = () => {
                                 />
                             </div>
 
+                            {/* Future Goals Field */}
                             <div>
                                 <label className="block mb-1 font-semibold">Future Goals</label>
                                 <textarea
@@ -170,9 +177,11 @@ const AccountPage = () => {
                                 />
                             </div>
 
+                            {/* Completed Courses Field */}
                             <div>
                                 <label className="block mb-1 font-semibold">Completed Courses</label>
                                 <div className="flex flex-wrap gap-2 mb-2">
+                                    {/* Display completed courses */}
                                     {completedCourses.map((course, idx) => (
                                         <span
                                             key={idx}
@@ -189,6 +198,8 @@ const AccountPage = () => {
                                         </span>
                                     ))}
                                 </div>
+
+                                {/* Search and add course */}
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -197,6 +208,7 @@ const AccountPage = () => {
                                         value={courseSearchTerm}
                                         onChange={(e) => setCourseSearchTerm(e.target.value)}
                                     />
+                                    {/* Display search results */}
                                     {courseResults?.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-60 overflow-y-auto rounded shadow-lg">
                                             {courseResults.map((course) => (
@@ -216,6 +228,7 @@ const AccountPage = () => {
                             <div>
                                 <label className="block mb-1 font-semibold">Sports / Clubs</label>
                                 <div className="flex flex-wrap gap-2 mb-2">
+                                    {/* Display sports */}
                                     {sports.map((sport, idx) => (
                                         <span
                                             key={idx}
@@ -232,6 +245,7 @@ const AccountPage = () => {
                                         </span>
                                     ))}
                                 </div>
+                                {/* Search and add sport */}
                                 <div className="relative">
                                     <input
                                         type="text"
@@ -240,6 +254,7 @@ const AccountPage = () => {
                                         value={sportSearchTerm}
                                         onChange={(e) => setSportSearchTerm(e.target.value)}
                                     />
+                                    {/* Display search results */}
                                     {sportResults?.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-40 overflow-y-auto rounded shadow-lg">
                                             {sportResults.map((sport) => (
@@ -256,6 +271,7 @@ const AccountPage = () => {
                                 </div>
                             </div>
 
+                            {/* Save and Cancel Buttons */}
                             <div className="mt-4 flex gap-2">
                                 <button onClick={handleSaveProfile} className="button-default">
                                     Save
@@ -267,26 +283,37 @@ const AccountPage = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
+                            {/* Display user information */}
                             <p><b>Name:</b> {user?.name}</p>
                             <p><b>Email:</b> {user?.email}</p>
-                            <p><b>Future Goals:</b> {user?.futureGoals || 'None'}</p>
-                            <p>
-                                <b>Completed Courses:</b>{' '}
-                                {user?.completedCourses?.length > 0 ? user?.completedCourses.join(', ') : 'None'}
-                            </p>
-                            <p>
-                                <b>Sports / Clubs:</b>{' '}
-                                {user?.sports?.length > 0 ? user?.sports.join(', ') : 'None'}
-                            </p>
+                            <p><b>Future Goals:</b></p>
+                            <ul><li>{user?.futureGoals || 'None'}</li></ul>{/* Life hack to get the same spacing */}
+                            
+                            <p><b>Completed Courses:</b></p>
+                            {user?.completedCourses?.length > 0 ? (
+                                <ul>
+                                    {user.completedCourses.map((course, index) => (
+                                        <li key={index}>{course}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>None</p>
+                            )}
+
+                            <p><b>Sports / Clubs:</b></p>
+                            {user?.sports?.length > 0 ? (
+                                <ul>
+                                    {user.sports.map((sport, index) => (
+                                        <li key={index}>{sport}</li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>None</p>
+                            )}
                         </div>
                     )}
                 </div>
-
-                <div className="text-center">
-                    <button onClick={logoutUser} className="button-default">
-                        Logout
-                    </button>
-                </div>
+                
             </div>
         </div>
     );
