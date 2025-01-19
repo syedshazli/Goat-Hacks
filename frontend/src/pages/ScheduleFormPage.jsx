@@ -3,9 +3,10 @@ import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { CourseContext } from '../contexts/CourseContext';
+import { toast } from 'react-toastify';
 
 const ScheduleFormPage = () => {
-    const { user, token } = useContext(AuthContext);
+    const { user, jwtToken } = useContext(AuthContext);
     const { academicCourses, sportsCourses, fetchSchedules } = useContext(CourseContext);
 
     const navigate = useNavigate();
@@ -50,28 +51,36 @@ const ScheduleFormPage = () => {
         // Update user's profile with new data
         const updatedProfile = { completedCourses, sports, futureGoals };
 
-        fetch('/update-profile', {
+        fetch('/api/update-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${jwtToken}`
             },
             body: JSON.stringify(updatedProfile),
         })
         .then((res) => {
-            if (!res.ok) throw new Error('Error updating profile');
+            if (!res.ok) {
+                toast.error('Error updating profile');
+                throw new Error('Error updating profile');
+            }
+            toast.success('Profile updated successfully');
             return res.json();
         })
         .then(() => {
             // Call generate schedule
-            return fetch('/generate-schedule', {
+            return fetch('/api/generate-schedule', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify(updatedProfile),
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
+                body: JSON.stringify(...user),
             });
         })
         .then((res) => {
-            if (!res.ok) throw new Error('Error generating schedule');
+            if (!res.ok) {
+                toast.error('Error generating schedule');
+                throw new Error('Error generating schedule');
+            }
+            toast.success('Schedule generated successfully');
             return res.json();
         })
         .then(() => {

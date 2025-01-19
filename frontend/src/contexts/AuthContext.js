@@ -21,6 +21,7 @@ export const AuthProvider = ({ children }) => {
         });
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('access_token', jwtToken);
+        fetchUserProfile(jwtToken);
     };
 
     // Logout function
@@ -84,7 +85,7 @@ export const AuthProvider = ({ children }) => {
     }, [authState.jwtToken]);
 
     return (
-        <AuthContext.Provider value={{ ...authState, loginUser, logoutUser }}>
+        <AuthContext.Provider value={{ ...authState, loginUser, logoutUser, fetchUserProfile }}>
             {children}
         </AuthContext.Provider>
     );
