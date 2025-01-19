@@ -268,7 +268,7 @@ def generate_schedule():
 
     # Run the Swarm
     final_text = run_swarm(
-        model_override="gpt-4o-mini", # can't use 4o idk
+        model_override="gpt-4o", # can't use 4o idk
         messages=[{"role": "user", "content": "Generate a schedule."}],
         context_variables=context_variables,
     )
