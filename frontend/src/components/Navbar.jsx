@@ -7,7 +7,7 @@ const Navbar = () => {
 
     return (
         <nav className="fixed w-full z-10 top-0 left-0 flex items-center justify-between py-4 px-8 text-white glass">
-            {/* Logo */}
+            {/* Add the logo */}
             <div className="text-2xl font-bold">
                 <Link to="/">SchAIdule</Link>
             </div>
@@ -15,7 +15,7 @@ const Navbar = () => {
             <div className="space-x-4">
                 {user ? (
                     <>
-                        {/* If the user is logged in, show account and logout links */}
+                        {/* User logged in, show account and logout links */}
                         <Link to="/account" className="hover:underline transition-colors duration-200">
                             My Account
                         </Link>
@@ -23,9 +23,11 @@ const Navbar = () => {
                             Logout
                         </button>
                     </>
-                ) : (
+                ) 
+                : 
+                (
                     <>
-                        {/* If the user is not logged in, show login and register links */}
+                        {/* User didn't login, show login and register links */}
                         <Link to="/login" className="hover:underline transition-colors duration-200">
                             Login
                         </Link>
