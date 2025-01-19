@@ -30,7 +30,7 @@ const RegisterPage = () => {
         .then((data) => {
             toast.success('Registration successful');
             loginUser({ userData: data.user, jwtToken: data.access_token }); // Store user data in context
-            navigate('/schedule-form');
+            navigate('/');
         })
         .catch((err) => {
             console.error(err);

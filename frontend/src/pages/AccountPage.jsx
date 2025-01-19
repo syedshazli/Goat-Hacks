@@ -117,9 +117,7 @@ const AccountPage = () => {
 
     // Fetch courses on mount if not already fetched
     useEffect(() => {
-        if (user && academicCourses?.length === 0 && sportsCourses?.length === 0) {
-            fetchCourses();
-        }
+        if (user && academicCourses?.length === 0 && sportsCourses?.length === 0) fetchCourses();
     }, [user, academicCourses, sportsCourses, fetchCourses]);
 
     return (
@@ -313,7 +311,7 @@ const AccountPage = () => {
                         </div>
                     )}
                 </div>
-                
+
             </div>
         </div>
     );

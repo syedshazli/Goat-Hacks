@@ -50,6 +50,12 @@ const ScheduleFormPage = () => {
         setSports((prev) => prev.filter((c) => c !== name));
     };
 
+    // Redirect to login if no jwtToken
+    if (!jwtToken) {
+        navigate('/login');
+        return;
+    }
+
     // Submit the form data
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -79,6 +85,8 @@ const ScheduleFormPage = () => {
         })
         .catch((err) => console.error(err));
     };
+
+    
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">

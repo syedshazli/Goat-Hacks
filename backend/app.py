@@ -256,14 +256,6 @@ def generate_schedule():
         "Computer Science Department",
         "Robotics Engineering Department",
         "Humanities and Arts Department",
-        "Business School",
-        "Electrical and Computer Engineering Department",
-        "Chemical Engineering Department",
-        "Mathematical Sciences Department",
-        "Physics Department",
-        "Mechanical and Materials Engineering Department",
-        "Biology and Biotechnology Department",
-        "Physical Education and Athletics Department",
     ]
 
     # Prepare context for the Swarm

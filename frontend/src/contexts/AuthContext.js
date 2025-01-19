@@ -76,9 +76,7 @@ export const AuthProvider = ({ children }) => {
     // Fetch user profile on mount or when jwtToken changes
     useEffect(() => {
         const token = authState.jwtToken;
-        if (token) {
-            fetchUserProfile(token);
-        }
+        if (token) fetchUserProfile(token);
     }, [authState.jwtToken]);
 
     return (
