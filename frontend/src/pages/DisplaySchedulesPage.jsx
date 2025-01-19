@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
 
 const DisplaySchedulesPage = () => {
     const { jwtToken, user } = useContext(AuthContext);
@@ -11,39 +12,43 @@ const DisplaySchedulesPage = () => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        const generateSchedule = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const response = await fetch('/api/generate-schedule', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${jwtToken}`,
-                    },
-                    body: JSON.stringify({
-                        userData: user,
-                    }),
-                });
+        // Fetch schedule only once on mount
+        if (!jwtToken) {
+            setLoading(false);
+            setError('No valid token found');
+            return;
+        }
 
+        fetch('/api/generate-schedule', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${jwtToken}`,
+            },
+            body: JSON.stringify({
+                userData: user,
+            }),
+        })
+            .then((response) => {
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to generate schedule');
+                    return response.json().then((errorData) => {
+                        throw new Error(errorData.message || 'Failed to generate schedule');
+                    });
                 }
-
-                const data = await response.json();
+                return response.json();
+            })
+            .then((data) => {
                 setSchedule(data.schedule);
-            } catch (err) {
+            })
+            .catch((err) => {
                 console.error(err);
                 setError(err.message);
                 toast.error(`Error: ${err.message}`);
-            } finally {
+            })
+            .finally(() => {
                 setLoading(false);
-            }
-        };
-
-        generateSchedule();
-    }, [jwtToken]);
+            });
+    }, []);
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -63,17 +68,17 @@ const DisplaySchedulesPage = () => {
                         <p className="text-red-500">Error: {error}</p>
                     ) : !schedule ? (
                         <p className="text-center">No schedule found. Try again.</p>
-                    ) : (
+                    ) : schedule.recommendations.join("").includes("final") ? (
                         <div className="bg-white/10 p-4 rounded shadow">
                             <h3 className="text-xl font-semibold mb-2">
                                 Your Recommended Schedule
                             </h3>
-                            <ul className="list-disc list-inside">
-                                {schedule.recommendations.map((recommendation, idx) => (
-                                    <li key={idx}>{recommendation}</li>
-                                ))}
-                            </ul>
+                            {schedule.recommendations.map((recommendation, idx) => (
+                                <ReactMarkdown className="p-1">{recommendation}</ReactMarkdown>
+                            ))}
                         </div>
+                    ) : (
+                        <p>Loading...</p>
                     )}
 
                     {/* Generate Another Button */}

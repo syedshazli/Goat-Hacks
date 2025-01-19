@@ -16,7 +16,7 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 
 from models import Base, Department, Course, Instructor, Location, Enrollment, Student, StudentClass
 
-from schedule_swarm import schedule_swarm, schedule_router
+from run import run_swarm
 
 # Configuration
 DATABASE_URL = "sqlite:///WPI_COURSE_LISTINGS.db"
@@ -319,48 +319,39 @@ def update_profile():
     return jsonify({"message": "Profile updated successfully"}), 200
 
 # Returns a new valid schedule for the user
-@app.route('/api/generate-schedule', methods=['POST'])
+@app.route("/api/generate-schedule", methods=["POST"])
 @jwt_required()
 def generate_schedule():
     """
     Runs the multi-agent Swarm, parses the recommendations into JSON,
     and returns the generated schedule directly. Uses data from the request
-    payload rather than from the DB for completed courses, sports, and goals.
+    payload rather than from the DB for completedCourses, sports, futureGoals.
     """
-    # 1. Parse the incoming JSON payload
+    # Parse the incoming JSON payload
     data = request.get_json() or {}
-    
-    # 'userData' might look like:
-    # {
-    #   "completedCourses": [...],
-    #   "sports": [...],
-    #   "futureGoals": "...",
-    #   ...
-    # }
     user_data = data.get("userData", {})
-    
+
     # Extract fields from user_data
     completed_courses = user_data.get("completedCourses", [])
     sports = user_data.get("sports", [])
     future_goals = user_data.get("futureGoals", "")
-    
-    # 2. (Optional) Confirm the user actually exists in the database 
-    #    (if you still want to ensure the user from JWT is valid).
-    #    Otherwise, you can remove these lines entirely.
-    db = SessionLocal()
-    user_id = get_jwt_identity()
-    current_user = db.query(Student).filter_by(id=user_id).first()
-    if not current_user:
-        db.close()
-        return jsonify({"message": "User not found"}), 404
 
-    # 3. (Optional) Fetch department names from the DB.
-    #    If you don't need this data from the DB, remove or replace with a static list.
-    departments = db.query(Department).all()
-    db.close()
-    department_names = [d.name for d in departments]
+    # department_names = [d.name for d in departments]
+    # Only these for now
+    department_names = [
+        "Computer Science Department",
+        "Robotics Engineering Department",
+        "Humanities and Arts Department",
+        "Business School",
+        "Electrical and Computer Engineering Department",
+        "Chemical Engineering Department",
+        "Mathematical Sciences Department",
+        "Physics Department",
+        "Mechanical and Materials Engineering Department",
+        "Biology and Biotechnology Department",
+    ]
 
-    # 4. Prepare context for the Swarm
+    # Prepare context for the Swarm
     context_variables = {
         "completedCourses": completed_courses,
         "sports": sports,
@@ -368,25 +359,19 @@ def generate_schedule():
         "departmentNames": department_names,
     }
 
-    # 5. Run the Swarm
-    try:
-        result = schedule_swarm.run(
-            agent=schedule_router,
-            model_override="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Generate a schedule."}],
-            context_variables=context_variables
-        )
-    except openai.error.OpenAIError as e:
-        return jsonify({"message": f"Swarm error: {str(e)}"}), 500
+    # Run the Swarm
+    final_text = run_swarm(
+        model_override="gpt-4o-mini", # can't use 4o idk
+        messages=[{"role": "user", "content": "Generate a schedule."}],
+        context_variables=context_variables,
+    )
 
-    final_text = result.messages[-1]["content"]
-
-    # 6. Parse final_text into something structured
+    # Parse final_text into something structured
     schedule_obj = {
         "recommendations": final_text.splitlines()
     }
 
-    # 7. Return the response
+    # Return the response
     return jsonify({
         "message": "Schedule generated",
         "schedule": schedule_obj

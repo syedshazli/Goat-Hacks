@@ -117,7 +117,7 @@ const AccountPage = () => {
 
     // Fetch courses on mount if not already fetched
     useEffect(() => {
-        if (user && academicCourses.length === 0 && sportsCourses.length === 0) {
+        if (user && academicCourses?.length === 0 && sportsCourses?.length === 0) {
             fetchCourses();
         }
     }, [user, academicCourses, sportsCourses, fetchCourses]);
@@ -197,7 +197,7 @@ const AccountPage = () => {
                                         value={courseSearchTerm}
                                         onChange={(e) => setCourseSearchTerm(e.target.value)}
                                     />
-                                    {courseResults.length > 0 && (
+                                    {courseResults?.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-60 overflow-y-auto rounded shadow-lg">
                                             {courseResults.map((course) => (
                                                 <li
@@ -240,7 +240,7 @@ const AccountPage = () => {
                                         value={sportSearchTerm}
                                         onChange={(e) => setSportSearchTerm(e.target.value)}
                                     />
-                                    {sportResults.length > 0 && (
+                                    {sportResults?.length > 0 && (
                                         <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-40 overflow-y-auto rounded shadow-lg">
                                             {sportResults.map((sport) => (
                                                 <li
@@ -272,11 +272,11 @@ const AccountPage = () => {
                             <p><b>Future Goals:</b> {user?.futureGoals || 'None'}</p>
                             <p>
                                 <b>Completed Courses:</b>{' '}
-                                {user?.completedCourses.length > 0 ? user?.completedCourses.join(', ') : 'None'}
+                                {user?.completedCourses?.length > 0 ? user?.completedCourses.join(', ') : 'None'}
                             </p>
                             <p>
                                 <b>Sports / Clubs:</b>{' '}
-                                {user?.sports.length > 0 ? user?.sports.join(', ') : 'None'}
+                                {user?.sports?.length > 0 ? user?.sports.join(', ') : 'None'}
                             </p>
                         </div>
                     )}
