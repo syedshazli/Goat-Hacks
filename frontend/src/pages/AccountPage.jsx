@@ -267,16 +267,16 @@ const AccountPage = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            <p><b>Name:</b> {name}</p>
-                            <p><b>Email:</b> {email}</p>
-                            <p><b>Future Goals:</b> {futureGoals || 'None'}</p>
+                            <p><b>Name:</b> {user?.name}</p>
+                            <p><b>Email:</b> {user?.email}</p>
+                            <p><b>Future Goals:</b> {user?.futureGoals || 'None'}</p>
                             <p>
                                 <b>Completed Courses:</b>{' '}
-                                {completedCourses.length > 0 ? completedCourses.join(', ') : 'None'}
+                                {user?.completedCourses.length > 0 ? user?.completedCourses.join(', ') : 'None'}
                             </p>
                             <p>
                                 <b>Sports / Clubs:</b>{' '}
-                                {sports.length > 0 ? sports.join(', ') : 'None'}
+                                {user?.sports.length > 0 ? user?.sports.join(', ') : 'None'}
                             </p>
                         </div>
                     )}

@@ -6,11 +6,8 @@ export const CourseContext = createContext();
 export const CourseProvider = ({ children }) => {
     const { user, jwtToken } = useContext(AuthContext);
     const [courses, setCourses] = useState([]);
-    const [schedules, setSchedules] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(true);
-    const [loadingSchedules, setLoadingSchedules] = useState(true);
     const [errorCourses, setErrorCourses] = useState(null);
-    const [errorSchedules, setErrorSchedules] = useState(null);
 
     // Normalize title
     const normalizeTitle = (title) => {
@@ -50,47 +47,15 @@ export const CourseProvider = ({ children }) => {
             });
     };
 
-    // Fetch schedules from backend
-    const fetchSchedules = () => {
-        setLoadingSchedules(true);
-        fetch('/api/schedules', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${jwtToken}`,
-            },
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch schedules');
-                }
-                return response.json();
-            })
-            .then(data => {
-                setSchedules(data.schedules);
-            })
-            .catch(err => {
-                console.error(err);
-                setErrorSchedules(err.message);
-            })
-            .finally(() => {
-                setLoadingSchedules(false);
-            });
-    };
-
     // Fetch data on mount or when user changes
     useEffect(() => {
         if (user) { // Only fetch if user is logged in
             fetchCourses();
-            fetchSchedules();
         } else {
             // Reset state if user logs out
             setCourses([]);
-            setSchedules([]);
             setLoadingCourses(false);
-            setLoadingSchedules(false);
             setErrorCourses(null);
-            setErrorSchedules(null);
         }
     }, [user]);
 
@@ -117,16 +82,11 @@ export const CourseProvider = ({ children }) => {
         <CourseContext.Provider
             value={{
                 courses,
-                schedules,
                 academicCourses,
                 sportsCourses,
                 loadingCourses,
-                loadingSchedules,
                 errorCourses,
-                errorSchedules,
                 fetchCourses,
-                fetchSchedules,
-                setSchedules,
             }}
         >
             {children}

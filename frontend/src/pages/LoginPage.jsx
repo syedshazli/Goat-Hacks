@@ -34,7 +34,6 @@ const LoginPage = () => {
         })
         .catch((err) => {
             console.error(err);
-            alert(err.message || 'Login failed. Please try again.');
         });
     };
 

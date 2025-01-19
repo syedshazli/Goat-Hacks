@@ -1,11 +1,49 @@
-// src/pages/DisplaySchedulesPage.js
-import React, { useContext } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import Navbar from '../components/Navbar';
-import { CourseContext } from '../contexts/CourseContext';
+import { AuthContext } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const DisplaySchedulesPage = () => {
-    const { schedules, loadingSchedules, errorSchedules } = useContext(CourseContext);
+    const { jwtToken, user } = useContext(AuthContext);
+    const [schedule, setSchedule] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const generateSchedule = async () => {
+            setLoading(true);
+            setError(null);
+            try {
+                const response = await fetch('/api/generate-schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`,
+                    },
+                    body: JSON.stringify({
+                        userData: user,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to generate schedule');
+                }
+
+                const data = await response.json();
+                setSchedule(data.schedule);
+            } catch (err) {
+                console.error(err);
+                setError(err.message);
+                toast.error(`Error: ${err.message}`);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        generateSchedule();
+    }, [jwtToken]);
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -19,26 +57,22 @@ const DisplaySchedulesPage = () => {
                     </h2>
 
                     {/* Schedules Grid */}
-                    {loadingSchedules ? (
+                    {loading ? (
                         <p>Loading...</p>
-                    ) : errorSchedules ? (
-                        <p className="text-red-500">Error: {errorSchedules}</p>
-                    ) : !schedules || schedules.length === 0 ? (
-                        <p className="text-center">No schedules found. Try again.</p>
+                    ) : error ? (
+                        <p className="text-red-500">Error: {error}</p>
+                    ) : !schedule ? (
+                        <p className="text-center">No schedule found. Try again.</p>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {schedules.map((schedule, index) => (
-                                <div key={index} className="bg-white/10 p-4 rounded shadow">
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        Schedule Option {index + 1}
-                                    </h3>
-                                    <ul className="list-disc list-inside">
-                                        {schedule.courseIds?.map((courseId, idx) => (
-                                        <li key={idx}>Course ID: {courseId}</li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            ))}
+                        <div className="bg-white/10 p-4 rounded shadow">
+                            <h3 className="text-xl font-semibold mb-2">
+                                Your Recommended Schedule
+                            </h3>
+                            <ul className="list-disc list-inside">
+                                {schedule.recommendations.map((recommendation, idx) => (
+                                    <li key={idx}>{recommendation}</li>
+                                ))}
+                            </ul>
                         </div>
                     )}
 

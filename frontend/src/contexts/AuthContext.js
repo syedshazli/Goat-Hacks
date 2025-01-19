@@ -5,7 +5,7 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [authState, setAuthState] = useState({
-        user: JSON.parse(localStorage.getItem('user')) ?? null,
+        user: null,
         jwtToken: localStorage.getItem('access_token') ?? null,
         loading: false, // If profile data is being fetched
         error: null, // Stores any errors during fetching
@@ -19,7 +19,6 @@ export const AuthProvider = ({ children }) => {
             loading: false,
             error: null,
         });
-        localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('access_token', jwtToken);
         fetchUserProfile(jwtToken);
     };
@@ -32,7 +31,6 @@ export const AuthProvider = ({ children }) => {
             loading: false,
             error: null,
         });
-        localStorage.removeItem('user');
         localStorage.removeItem('access_token');
     };
 
@@ -63,7 +61,6 @@ export const AuthProvider = ({ children }) => {
                     user: data.user,
                     loading: false,
                 }));
-                localStorage.setItem('user', JSON.stringify(data.user)); // Update localStorage with fresh data
             }
         } catch (error) {
             console.error('Error fetching user profile:', error);

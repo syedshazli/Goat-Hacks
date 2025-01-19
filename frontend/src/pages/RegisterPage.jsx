@@ -35,7 +35,6 @@ const RegisterPage = () => {
         })
         .catch((err) => {
             console.error(err);
-            alert(err.message || 'Registration failed. Please try again.');
         });
     };
 

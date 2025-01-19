@@ -7,12 +7,12 @@ import { toast } from 'react-toastify';
 
 const ScheduleFormPage = () => {
     const { user, jwtToken } = useContext(AuthContext);
-    const { academicCourses, sportsCourses, fetchSchedules } = useContext(CourseContext);
+    const { academicCourses, sportsCourses } = useContext(CourseContext);
 
     const navigate = useNavigate();
 
     // Initialize from user's data, if any
-    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses|| []);
+    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses || []);
     const [sports, setSports] = useState(user?.sports || []);
     const [futureGoals, setFutureGoals] = useState(user?.futureGoals || '');
 
@@ -21,8 +21,12 @@ const ScheduleFormPage = () => {
     const [sportsSearch, setSportsSearch] = useState('');
 
     // Filter for the search
-    const filteredAcademic = academicCourses.filter((course) => course.course_title.toLowerCase().includes(academicSearch.toLowerCase()));
-    const filteredSports = sportsCourses.filter((course) => course.course_title.toLowerCase().includes(sportsSearch.toLowerCase()));
+    const filteredAcademic = academicCourses.filter((course) => 
+        course.course_title.toLowerCase().includes(academicSearch.toLowerCase())
+    );
+    const filteredSports = sportsCourses.filter((course) => 
+        course.course_title.toLowerCase().includes(sportsSearch.toLowerCase())
+    );
 
     // Add a course to completedCourses
     const handleAddAcademicCourse = (name) => {
@@ -68,25 +72,6 @@ const ScheduleFormPage = () => {
             return res.json();
         })
         .then(() => {
-            // Call generate schedule
-            return fetch('/api/generate-schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${jwtToken}` },
-                body: JSON.stringify(...user),
-            });
-        })
-        .then((res) => {
-            if (!res.ok) {
-                toast.error('Error generating schedule');
-                throw new Error('Error generating schedule');
-            }
-            toast.success('Schedule generated successfully');
-            return res.json();
-        })
-        .then(() => {
-            // Refetch schedules in context
-            fetchSchedules();
-
             // Navigate to display schedules
             navigate('/display-schedules');
         })
@@ -142,12 +127,12 @@ const ScheduleFormPage = () => {
                         {/* Academic Course Search Results */}
                         {academicSearch && (
                             <div className="max-h-32 overflow-y-auto bg-white/20 p-2 rounded">
-                                {academicSearch && filteredAcademic.map((course) => (
+                                {filteredAcademic.map((course) => (
                                     <div key={course.id} className="flex justify-between items-center mb-1">
-                                        <span className="text-sm">{course.name}</span>
+                                        <span className="text-sm">{course.course_title}</span>
                                         <button
                                             type="button"
-                                            onClick={() => handleAddAcademicCourse(course.name)}
+                                            onClick={() => handleAddAcademicCourse(course.course_title)}
                                             className="bg-white text-[#AC2B37] rounded px-2 py-1 text-sm"
                                         >
                                             Add
@@ -197,12 +182,12 @@ const ScheduleFormPage = () => {
                         {/* Sports Course Search Results */}
                         {sportsSearch && (
                             <div className="max-h-32 overflow-y-auto bg-white/20 p-2 rounded">
-                                {sportsSearch && filteredSports.map((course) => (
+                                {filteredSports.map((course) => (
                                     <div key={course.id} className="flex justify-between items-center mb-1">
-                                        <span className="text-sm">{course.name}</span>
+                                        <span className="text-sm">{course.course_title}</span>
                                         <button
                                             type="button"
-                                            onClick={() => handleAddSport(course.name)}
+                                            onClick={() => handleAddSport(course.course_title)}
                                             className="bg-white text-[#AC2B37] rounded px-2 py-1 text-sm"
                                         >
                                             Add
@@ -235,6 +220,7 @@ const ScheduleFormPage = () => {
             </div>
         </div>
     );
+
 };
 
 export default ScheduleFormPage;

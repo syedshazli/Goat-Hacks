@@ -10,10 +10,13 @@ from flask_jwt_extended import (
     get_jwt_identity
 )
 from flask_cors import CORS
+import openai
 from sqlalchemy import create_engine, or_
 from sqlalchemy.orm import sessionmaker, scoped_session
 
 from models import Base, Department, Course, Instructor, Location, Enrollment, Student, StudentClass
+
+from schedule_swarm import schedule_swarm, schedule_router
 
 # Configuration
 DATABASE_URL = "sqlite:///WPI_COURSE_LISTINGS.db"
@@ -320,47 +323,75 @@ def update_profile():
 @jwt_required()
 def generate_schedule():
     """
-    Uses user data to generate recommended schedule.
-    Expects any relevant info in JSON, e.g.:
-      { "completedCourses": [...], "sports": [...], "futureGoals": ... }
-    For demonstration, we’ll just return a mock schedule.
+    Runs the multi-agent Swarm, parses the recommendations into JSON,
+    and returns the generated schedule directly. Uses data from the request
+    payload rather than from the DB for completed courses, sports, and goals.
     """
+    # 1. Parse the incoming JSON payload
+    data = request.get_json() or {}
+    
+    # 'userData' might look like:
+    # {
+    #   "completedCourses": [...],
+    #   "sports": [...],
+    #   "futureGoals": "...",
+    #   ...
+    # }
+    user_data = data.get("userData", {})
+    
+    # Extract fields from user_data
+    completed_courses = user_data.get("completedCourses", [])
+    sports = user_data.get("sports", [])
+    future_goals = user_data.get("futureGoals", "")
+    
+    # 2. (Optional) Confirm the user actually exists in the database 
+    #    (if you still want to ensure the user from JWT is valid).
+    #    Otherwise, you can remove these lines entirely.
     db = SessionLocal()
-    data = request.get_json()
-
-    # Retrieve current user ID from JWT
     user_id = get_jwt_identity()
     current_user = db.query(Student).filter_by(id=user_id).first()
-
     if not current_user:
         db.close()
         return jsonify({"message": "User not found"}), 404
 
-    # Extract user data
-    completed_courses = json.loads(current_user.completed_courses) if current_user.completed_courses else []
-    sports = json.loads(current_user.sports) if current_user.sports else []
-    future_goals = current_user.future_goals
-
-    # TODO: make ai make schedules
-
+    # 3. (Optional) Fetch department names from the DB.
+    #    If you don't need this data from the DB, remove or replace with a static list.
+    departments = db.query(Department).all()
     db.close()
+    department_names = [d.name for d in departments]
 
-    return jsonify({"message": "Schedule generated", "schedules": "tbd"}), 200
+    # 4. Prepare context for the Swarm
+    context_variables = {
+        "completedCourses": completed_courses,
+        "sports": sports,
+        "futureGoals": future_goals,
+        "departmentNames": department_names,
+    }
 
-# Returns all 'recommended schedules' for this user
-@app.route('/api/schedules', methods=['GET'])
-@jwt_required()
-def get_schedules():
-    """
-    Returns all 'recommended schedules' for this user.
-    For demonstration, returns placeholder schedules.
-    """
-    # TODO: Implement actual schedule storage and retrieval
-    placeholder_schedules = [
-        {"courseIds": [101, 202]},
-        {"courseIds": [303, 404]}
-    ]
-    return jsonify({"schedules": placeholder_schedules}), 200
+    # 5. Run the Swarm
+    try:
+        result = schedule_swarm.run(
+            agent=schedule_router,
+            model_override="gpt-4o-mini",
+            messages=[{"role": "user", "content": "Generate a schedule."}],
+            context_variables=context_variables
+        )
+    except openai.error.OpenAIError as e:
+        return jsonify({"message": f"Swarm error: {str(e)}"}), 500
+
+    final_text = result.messages[-1]["content"]
+
+    # 6. Parse final_text into something structured
+    schedule_obj = {
+        "recommendations": final_text.splitlines()
+    }
+
+    # 7. Return the response
+    return jsonify({
+        "message": "Schedule generated",
+        "schedule": schedule_obj
+    }), 200
+
 
 # Run the app
 if __name__ == '__main__':
