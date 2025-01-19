@@ -12,7 +12,6 @@ const DisplaySchedulesPage = () => {
     const [error, setError] = useState(null);
     const retryCount = useRef(0);
     const maxRetries = 3;
-    const retryDelay = 10;
 
     const fetchSchedule = async () => {
         try {
@@ -44,7 +43,7 @@ const DisplaySchedulesPage = () => {
         } catch (err) {
             retryCount.current += 1;
             if (retryCount.current <= maxRetries) {
-                setTimeout(fetchSchedule, retryDelay);
+                fetchSchedule();
             } else {
                 setLoading(false);
                 setError(err.message);
