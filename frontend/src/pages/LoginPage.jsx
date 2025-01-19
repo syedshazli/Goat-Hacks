@@ -2,6 +2,7 @@ import { useState, useContext } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -17,17 +18,22 @@ const LoginPage = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         })
-        .then((res) => {
-            if (!res.ok) throw new Error('Login failed');
-            return res.json();
+        .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+                const error = data.message || 'Login failed';
+                toast.error(error);
+                throw new Error(error);
+            }
+            return data;
         })
         .then((data) => {
-            loginUser({ userData: data.user, jwtToken: data.token }); // Change after backend is implemented
-            navigate('/account');
+            loginUser({ userData: data.user, jwtToken: data.access_token }); // Store user data in context
+            toast.success('Login successful');
+            navigate('/');
         })
         .catch((err) => {
             console.error(err);
-            alert('Login failed. Please try again.');
         });
     };
 

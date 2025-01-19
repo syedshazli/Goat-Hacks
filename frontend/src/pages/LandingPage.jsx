@@ -26,7 +26,7 @@ const LandingPage = () => {
             <Navbar />
 
             {/* Hero Section */}
-            <div className="flex flex-col items-center justify-center text-center pt-24 pb-16 px-4">
+            <div className="flex flex-col items-center justify-center text-center pt-36 pb-16 px-4">
                 <h1 className="text-5xl font-extrabold mb-4 leading-tight drop-shadow-md">
                     Welcome to SchAIdule
                 </h1>
@@ -35,7 +35,7 @@ const LandingPage = () => {
                     Balance academics, extracurriculars, and more.
                 </p>
                 <Link
-                    to="/register"
+                    to="/schedule-form"
                     className="
                         inline-block bg-white text-[#AC2B37] font-semibold px-8 py-3 rounded-full 
                         shadow-md hover:bg-[#f0f0f0] transition duration-300 
@@ -79,6 +79,7 @@ const LandingPage = () => {
                             Build My Schedule
                         </Link>
                     </div>
+                    
                 </div>
             </div>
             

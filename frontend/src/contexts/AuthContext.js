@@ -1,42 +1,86 @@
-import { createContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { createContext, useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-    const navigate = useNavigate();
-    const [user, setUser] = useState(null);
-    const [token, setToken] = useState(null);
-
-    // Check for token in localStorage on mount
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-        }
-    }, []);
+    const [authState, setAuthState] = useState({
+        user: null,
+        jwtToken: localStorage.getItem('access_token') ?? null,
+        loading: false, // If profile data is being fetched
+        error: null, // Stores any errors during fetching
+    });
 
     // Login function
     const loginUser = ({ userData, jwtToken }) => {
-        setUser(userData);
-        setToken(jwtToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('token', jwtToken);
+        setAuthState({
+            user: userData,
+            jwtToken: jwtToken,
+            loading: false,
+            error: null,
+        });
+        localStorage.setItem('access_token', jwtToken);
+        fetchUserProfile(jwtToken);
     };
 
     // Logout function
     const logoutUser = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        navigate('/login');
+        setAuthState({
+            user: null,
+            jwtToken: null,
+            loading: false,
+            error: null,
+        });
+        localStorage.removeItem('access_token');
     };
 
+    // Function to fetch user profile
+    const fetchUserProfile = async (token) => {
+        setAuthState((prevState) => ({ ...prevState, loading: true, error: null }));
+        try {
+            const response = await fetch('/api/get-profile', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    logoutUser();
+                    toast.error('Session expired. Please log in again.');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to fetch profile.');
+                }
+            } else {
+                const data = await response.json();
+                setAuthState((prevState) => ({
+                    ...prevState,
+                    user: data.user,
+                    loading: false,
+                }));
+            }
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            setAuthState((prevState) => ({
+                ...prevState,
+                loading: false,
+                error: error.message,
+            }));
+            toast.error(`Error fetching profile: ${error.message}`);
+        }
+    };
+
+    // Fetch user profile on mount or when jwtToken changes
+    useEffect(() => {
+        const token = authState.jwtToken;
+        if (token) fetchUserProfile(token);
+    }, [authState.jwtToken]);
+
     return (
-        <AuthContext.Provider value={{ user, token, loginUser, logoutUser }}>
+        <AuthContext.Provider value={{ ...authState, loginUser, logoutUser, fetchUserProfile }}>
             {children}
         </AuthContext.Provider>
     );

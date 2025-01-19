@@ -2,32 +2,38 @@ import { useState, useContext } from 'react';
 import Navbar from '../components/Navbar';
 import { AuthContext } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 const RegisterPage = () => {
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const { loginUser } = useContext(AuthContext);
     const navigate = useNavigate();
 
-// Register the user
+    // Register the user
     const handleRegister = (e) => {
         e.preventDefault();
 
-        fetch('/register', {
+        fetch('/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(formData),
         })
-        .then((res) => {
-            if (!res.ok) throw new Error('Registration failed');
-            return res.json();
+        .then(async (res) => {
+            const data = await res.json();
+            if (!res.ok) {
+                const error = data.message || 'Registration failed';
+                toast.error(error);
+                throw new Error(error);
+            }
+            return data;
         })
         .then((data) => {
-            loginUser({ userData: data.user, jwtToken: data.token }); // Change after backend is implemented
-            navigate('/account');
+            toast.success('Registration successful');
+            loginUser({ userData: data.user, jwtToken: data.access_token }); // Store user data in context
+            navigate('/');
         })
         .catch((err) => {
             console.error(err);
-            alert('Registration failed. Please try again.');
         });
     };
 
@@ -86,6 +92,7 @@ const RegisterPage = () => {
                     >
                         Register
                     </button>
+
                 </form>
             </div>
 

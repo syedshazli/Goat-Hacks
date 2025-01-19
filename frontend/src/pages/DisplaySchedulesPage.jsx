@@ -1,11 +1,64 @@
-// src/pages/DisplaySchedulesPage.js
-import React, { useContext } from 'react';
+import { useState, useEffect, useContext, useRef } from 'react';
 import Navbar from '../components/Navbar';
-import { CourseContext } from '../contexts/CourseContext';
+import { AuthContext } from '../contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import ReactMarkdown from 'react-markdown';
 
 const DisplaySchedulesPage = () => {
-    const { schedules, loadingSchedules, errorSchedules } = useContext(CourseContext);
+    const { jwtToken, user } = useContext(AuthContext);
+    const [schedule, setSchedule] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const retryCount = useRef(0);
+    const maxRetries = 3;
+
+    const fetchSchedule = async () => {
+        try {
+            const response = await fetch('/api/generate-schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${jwtToken}`,
+                },
+                body: JSON.stringify({ userData: user }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to generate schedule');
+            }
+
+            const data = await response.json();
+
+            // This is a cheating way bc swarm is being weird
+            const isValid = data.schedule?.recommendations.join("").includes("final");
+
+            if (isValid) {
+                setSchedule(data.schedule);
+                setLoading(false);
+            } else {
+                throw new Error('Failed to generate a valid schedule. Please try again.');
+            }
+        } catch (err) {
+            retryCount.current += 1;
+            if (retryCount.current <= maxRetries) {
+                fetchSchedule();
+            } else {
+                setLoading(false);
+                setError(err.message);
+            }
+        }
+    };
+
+    useEffect(() => {
+        if (!jwtToken) {
+            setLoading(false);
+            setError('No valid token found');
+            return;
+        }
+        fetchSchedule();
+    }, [jwtToken]);
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -19,25 +72,21 @@ const DisplaySchedulesPage = () => {
                     </h2>
 
                     {/* Schedules Grid */}
-                    {loadingSchedules ? (
-                        <p>Loading...</p>
-                    ) : errorSchedules ? (
-                        <p className="text-red-500">Error: {errorSchedules}</p>
-                    ) : !schedules || schedules.length === 0 ? (
-                        <p className="text-center">No schedules found. Try again.</p>
+                    {loading ? (
+                        <p className="text-center">Loading...</p>
+                    ) : error ? (
+                        <p className="text-red-500">Error: {error}</p>
+                    ) : !schedule ? (
+                        <p className="text-center">No schedule found. Try again.</p>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {schedules.map((schedule, index) => (
-                                <div key={index} className="bg-white/10 p-4 rounded shadow">
-                                    <h3 className="text-xl font-semibold mb-2">
-                                        Schedule Option {index + 1}
-                                    </h3>
-                                    <ul className="list-disc list-inside">
-                                        {schedule.courseIds?.map((courseId, idx) => (
-                                        <li key={idx}>Course ID: {courseId}</li>
-                                        ))}
-                                    </ul>
-                                </div>
+                        <div className="bg-white/10 p-4 rounded shadow">
+                            <h3 className="text-xl font-semibold mb-2">
+                                Your Recommended Schedule
+                            </h3>
+                            {schedule.recommendations.map((recommendation, idx) => (
+                                <ReactMarkdown key={idx} className="p-1">
+                                    {recommendation}
+                                </ReactMarkdown>
                             ))}
                         </div>
                     )}

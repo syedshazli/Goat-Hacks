@@ -3,19 +3,16 @@ import Navbar from '../components/Navbar';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { CourseContext } from '../contexts/CourseContext';
+import { toast } from 'react-toastify';
 
 const ScheduleFormPage = () => {
-    const { user, token } = useContext(AuthContext);
-    const { courses, fetchSchedules } = useContext(CourseContext);
+    const { user, jwtToken } = useContext(AuthContext);
+    const { academicCourses, sportsCourses } = useContext(CourseContext);
 
     const navigate = useNavigate();
 
-    // Separate academic courses vs. sports courses from the entire course list
-    const academicCourses = courses.filter((c) => !/club|varsity/i.test(c.name));
-    const sportsCourses = courses.filter((c) => /club|varsity/i.test(c.name));
-
     // Initialize from user's data, if any
-    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses?.filter((c) => !/club|varsity/i.test(c)) || []);
+    const [completedCourses, setCompletedCourses] = useState(user?.completedCourses || []);
     const [sports, setSports] = useState(user?.sports || []);
     const [futureGoals, setFutureGoals] = useState(user?.futureGoals || '');
 
@@ -24,17 +21,23 @@ const ScheduleFormPage = () => {
     const [sportsSearch, setSportsSearch] = useState('');
 
     // Filter for the search
-    const filteredAcademic = academicCourses.filter((course) => course.name.toLowerCase().includes(academicSearch.toLowerCase()));
-    const filteredSports = sportsCourses.filter((course) => course.name.toLowerCase().includes(sportsSearch.toLowerCase()));
+    const filteredAcademic = academicCourses.filter((course) => 
+        course.course_title.toLowerCase().includes(academicSearch.toLowerCase())
+    );
+    const filteredSports = sportsCourses.filter((course) => 
+        course.course_title.toLowerCase().includes(sportsSearch.toLowerCase())
+    );
 
     // Add a course to completedCourses
     const handleAddAcademicCourse = (name) => {
         if (!completedCourses.includes(name)) setCompletedCourses((prev) => [...prev, name]);
+        setAcademicSearch(''); // Clear search
     };
 
     // Add a course to sports
     const handleAddSport = (name) => {
         if (!sports.includes(name)) setSports((prev) => [...prev, name]);
+        setSportsSearch(''); // Clear search
     };
 
     // Remove a course from completedCourses
@@ -47,46 +50,43 @@ const ScheduleFormPage = () => {
         setSports((prev) => prev.filter((c) => c !== name));
     };
 
+    // Redirect to login if no jwtToken
+    if (!jwtToken) {
+        navigate('/login');
+        return;
+    }
+
     // Submit the form data
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        // 1) Update user's profile with new data
+        // Update user's profile with new data
         const updatedProfile = { completedCourses, sports, futureGoals };
 
-        fetch('/update-profile', {
+        fetch('/api/update-account', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
+                Authorization: `Bearer ${jwtToken}`
             },
             body: JSON.stringify(updatedProfile),
         })
         .then((res) => {
-            if (!res.ok) throw new Error('Error updating profile');
+            if (!res.ok) {
+                toast.error('Error updating profile');
+                throw new Error('Error updating profile');
+            }
+            toast.success('Profile updated successfully');
             return res.json();
         })
         .then(() => {
-            // 2) Optionally call generate schedule
-            return fetch('/generate-schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                body: JSON.stringify(updatedProfile),
-            });
-        })
-        .then((res) => {
-            if (!res.ok) throw new Error('Error generating schedule');
-            return res.json();
-        })
-        .then(() => {
-            // Refetch schedules in context
-            fetchSchedules();
-
             // Navigate to display schedules
             navigate('/display-schedules');
         })
         .catch((err) => console.error(err));
     };
+
+    
 
     return (
         <div className="min-h-screen bg-[#AC2B37] text-white">
@@ -100,76 +100,17 @@ const ScheduleFormPage = () => {
                     {/* Completed Courses Section */}
                     <div className="mb-6">
                         <label className="block mb-1 font-semibold text-lg">Completed Courses</label>
-                        <p className="text-sm mb-2">
-                            These are the academic courses you've finished.
-                        </p>
-                        
-                        {/* Display existing academic courses */}
                         <div className="flex flex-wrap gap-2 mb-2">
-                        {completedCourses.map((courseName, idx) => (
-                            <span
-                                key={idx}
-                                className="bg-white/30 px-2 py-1 rounded-full text-sm flex items-center space-x-2"
-                            >
-                                <span>{courseName}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => removeAcademicCourse(courseName)}
-                                    className="hover:text-red-300"
-                                >
-                                    &times;
-                                </button>
-                            </span>
-                        ))}
-                        </div>
-
-                        {/* Academic Course Search */}
-                        <div className="mb-2">
-                            <input
-                                type="text"
-                                placeholder="Search academic courses..."
-                                className="w-full p-2 rounded text-black"
-                                value={academicSearch}
-                                onChange={(e) => setAcademicSearch(e.target.value)}
-                            />
-                        </div>
-
-                        {/* Academic Course Search Results */}
-                        {academicSearch && (
-                            <div className="max-h-32 overflow-y-auto bg-white/20 p-2 rounded">
-                                {academicSearch && filteredAcademic.map((course) => (
-                                    <div key={course.id} className="flex justify-between items-center mb-1">
-                                        <span className="text-sm">{course.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAddAcademicCourse(course.name)}
-                                            className="bg-white text-[#AC2B37] rounded px-2 py-1 text-sm"
-                                        >
-                                            Add
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                    </div>
-
-                    {/* Sports Section */}
-                    <div className="mb-6">
-                        <label className="block mb-1 font-semibold text-lg">Sports</label>
-                        <p className="text-sm mb-2">Add any club or varsity teams you're participating in.</p>
-
-                        {/* Display existing sports */}
-                        <div className="flex flex-wrap gap-2 mb-2">
-                            {sports.map((sportName, idx) => (
+                            {/* Display completed courses */}
+                            {completedCourses.map((course, idx) => (
                                 <span
                                     key={idx}
                                     className="bg-white/30 px-2 py-1 rounded-full text-sm flex items-center space-x-2"
                                 >
-                                    <span>{sportName}</span>
+                                    <span>{course}</span>
                                     <button
                                         type="button"
-                                        onClick={() => removeSport(sportName)}
+                                        onClick={() => removeAcademicCourse(course)}
                                         className="hover:text-red-300"
                                     >
                                         &times;
@@ -178,35 +119,78 @@ const ScheduleFormPage = () => {
                             ))}
                         </div>
 
-                        {/* Sports Course Search */}
-                        <div className="mb-2">
+                        {/* Academic Course Search */}
+                        <div className="relative">
                             <input
                                 type="text"
-                                placeholder="Search sports..."
+                                placeholder="Search academic courses..."
+                                className="w-full p-2 rounded text-black"
+                                value={academicSearch}
+                                onChange={(e) => setAcademicSearch(e.target.value)}
+                            />
+                            {/* Display search results */}
+                            {academicSearch && filteredAcademic?.length > 0 && (
+                                <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-60 overflow-y-auto rounded shadow-lg">
+                                    {filteredAcademic.map((course) => (
+                                        <li
+                                            key={course.id}
+                                            className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                                            onClick={() => handleAddAcademicCourse(course.course_title)}
+                                        >
+                                            {course.course_title} ({course.course_section})
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Sports Section */}
+                    <div className="mb-6">
+                        <label className="block mb-1 font-semibold text-lg">Sports</label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {/* Display sports */}
+                            {sports.map((sport, idx) => (
+                                <span
+                                    key={idx}
+                                    className="bg-white/30 px-2 py-1 rounded-full text-sm flex items-center space-x-2"
+                                >
+                                    <span>{sport}</span>
+                                    <button
+                                        type="button"
+                                        onClick={() => removeSport(sport)}
+                                        className="hover:text-red-300"
+                                    >
+                                        &times;
+                                    </button>
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* Sports Search */}
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Search and add sport/club"
                                 className="w-full p-2 rounded text-black"
                                 value={sportsSearch}
                                 onChange={(e) => setSportsSearch(e.target.value)}
                             />
-                        </div>
-
-                        {/* Sports Course Search Results */}
-                        {sportsSearch && (
-                            <div className="max-h-32 overflow-y-auto bg-white/20 p-2 rounded">
-                                {sportsSearch && filteredSports.map((course) => (
-                                    <div key={course.id} className="flex justify-between items-center mb-1">
-                                        <span className="text-sm">{course.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAddSport(course.name)}
-                                            className="bg-white text-[#AC2B37] rounded px-2 py-1 text-sm"
+                            {/* Display search results */}
+                            {sportsSearch && filteredSports?.length > 0 && (
+                                <ul className="absolute z-10 bg-white text-black w-full mt-1 max-h-40 overflow-y-auto rounded shadow-lg">
+                                    {filteredSports.map((sport) => (
+                                        <li
+                                            key={sport.id}
+                                            className="px-4 py-2 hover:bg-gray-200 cursor-pointer"
+                                            onClick={() => handleAddSport(sport.course_title)}
                                         >
-                                            Add
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
+                                            {sport.course_title} ({sport.course_section})
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
                     </div>
 
                     {/* Future Goals Section */}
@@ -230,6 +214,7 @@ const ScheduleFormPage = () => {
             </div>
         </div>
     );
+
 };
 
 export default ScheduleFormPage;
